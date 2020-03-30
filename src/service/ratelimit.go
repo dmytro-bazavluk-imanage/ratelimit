@@ -1,10 +1,13 @@
 package ratelimit
 
 import (
+	"strconv"
 	"strings"
 	"sync"
 
+	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	pb "github.com/envoyproxy/go-control-plane/envoy/service/ratelimit/v2"
+
 	"github.com/envoyproxy/ratelimit/src/assert"
 	"github.com/envoyproxy/ratelimit/src/config"
 	"github.com/envoyproxy/ratelimit/src/redis"
@@ -125,6 +128,15 @@ func (this *service) shouldRateLimitWorker(
 		if descriptorStatus.Code == pb.RateLimitResponse_OVER_LIMIT {
 			finalCode = descriptorStatus.Code
 		}
+	}
+	response.Headers = make([]*core.HeaderValue, 2)
+	response.Headers[0] = &core.HeaderValue{
+		Key:   "X-RL-finalCode",
+		Value: strconv.Itoa(int(finalCode)),
+	}
+	response.Headers[1] = &core.HeaderValue{
+		Key:   "X-RL-another-header",
+		Value: "value",
 	}
 
 	response.OverallCode = finalCode
